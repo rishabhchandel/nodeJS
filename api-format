@@ -1,0 +1,15 @@
+curl -i url -d '{}' -H headers -X POST -H 'Content-Type: application/json'
+
+url:
+
+'http:172.12.12.21:3000/v1/rishabh/value?wewqw=sadsa&dsadsa=dsads&sadsa=asddas'
+
+                                          this.query.wewqw == sadsa
+
+
+if (!res.user) {
+  this.status = 402;
+  this.body = { err: "user not found" };
+} else if (res.err) {
+  this.status = 401;
+  this.body = { err: "Pins dont match" };

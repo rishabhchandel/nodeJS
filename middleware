@@ -1,0 +1,118 @@
+MobileDetect = require('mobile-detect');
+jwt = require('koa-jwt'),
+cors = require('koa-cors'),
+parse = require('koa-better-body'),
+responseTime = require("koa-response-time"),
+compress = require("koa-compress"),
+route = require('koa-router'),
+swigRender = require('koa-swig'),
+path = require('path'),
+serve = require('koa-static');
+
+
+###auth
+app.use(jwt({
+    secret: 'key or path of key',
+    algorithms: ['HS256'],
+    cookie: 'Authorization'
+}));
+
+
+// app.use(jwt({ secret: 'key or path of key', key: "user", cookie: "Authorization" }));
+app.use(function*(next) {
+    let User = mongoose.model('User');
+    let user = yield User.findById(this.state.user._id).exec();
+    if (!user) {
+        this.body = {
+            err: "Unauthorized request"
+        };
+        return;
+    }
+    console.log("user: ", user);
+    this.document = {};
+    this.document.user = user;
+  }
+
+
+  ###CORS
+
+  app.use(cors({
+      maxAge: 300000,
+      credentials: true,
+      methods: 'GET, HEAD, OPTIONS, PUT, POST, DELETE',
+      headers: 'Access-Control-Allow-Origin, Access-Control-Expose-Headers, Origin, X-Requested-With, Content-Type, Accept, Authorization'
+  }));
+
+
+  ### frouting and mapping
+  let pubRouter = route();
+  let secRouter = route();
+  let adminRouter = route();
+
+  /** Initiate all the routes defined in the api controllers */
+  fs.readdirSync('./server/controllers').forEach(function(file) {
+    if (!file.endsWith('.js'))
+      return;
+    let controller = require('../controllers/' + file);
+    if (controller.initAdmin)
+      controller.initAdmin(adminRouter);
+    if (controller.initPub)
+      controller.initPub(pubRouter);
+    if (controller.initSecured)
+      controller.initSecured(secRouter);
+  });
+
+
+####pasring
+let IncomingForm = require('formidable');
+
+let form = new IncomingForm();
+let config = require('./../../config/config')
+form.keepExtensions = true;
+//form.encoding = 'utf-8';
+form.uploadDir = config.uploads.uploadDir
+
+module.exports = function(app, config) {
+    try {
+        app.use(parser({
+            multipart: true,
+            IncomingForm: form,
+            textLimit: '1700mb',
+            formLimit: '1700mb',
+            urlencodedLimit: '1700mb',
+            jsonLimit: '1700mb',
+            bufferLimit: '1700mb'
+        }));
+    } catch (err) {
+        console.error("Error in parsing : ", err);
+    }
+};
+
+
+
+###page rendering and public directory
+
+app.use(statics(path.join(__dirname, '/../../public')));
+
+app.context.render = swigRender({
+  root: path.join(__dirname, '../../views'),
+  autoescape: true,
+  cache: limit,
+  ext: 'html'
+  //locals: locals
+  //filters: filters,
+  //tags: tags,
+  //extensions: extensions
+});
+
+
+
+//redirecting and detect mobileAgent
+
+if (this.path.toString().split('/')[2] == "share") {
+  let md = new MobileDetect(this.request.headers['user-agent']);
+  if (md.os() == "AndroidOS")
+    this.redirect('');
+  else if (md.os() == "iOS") this.redirect('https://spoj.com?referral=' + referral);
+  return;
+}

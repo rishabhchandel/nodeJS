@@ -1,0 +1,16 @@
+'use strict' //for let
+
+request = require('co-request');
+
+let res = yield request({
+    url: 'url',
+    method: 'POST',
+    json : { userId : phone, password : password }
+    headers: {
+        authorization: "Basic basicAUthseeintutorialPoint=="
+    }
+});
+
+res.statusCode// http code like 200,201
+
+JSON.parse(disRes.body),// data come from corequest 
